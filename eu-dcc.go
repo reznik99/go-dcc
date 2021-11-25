@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // DCC (Digital Covid Certificate) Top Level CBOR structure
 // Section 3.3.1 at https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_v1_en.pdf
 type DCC struct {
@@ -48,3 +50,43 @@ var (
 	VaccineType            = "1119349007"    // SARS-CoV-2 mRNA vaccine
 	MarketingAuthorisation = "ORG-100030215" // Biontech Manufacturing GmbH
 )
+
+func generateDCC(name, surname, dob, issuerCountry, issuer, vaccinationDate string, vaccinationDoses int) *DCC {
+
+	issuedAt := int(time.Now().Unix())
+	expiry := int(time.Now().AddDate(1, 0, 0).Unix())
+
+	NameInfo := Nam{
+		Fn:  surname,
+		Fnt: surname,
+		Gn:  name,
+		Gnt: name,
+	}
+
+	VaccinePayload := V{
+		Dn: vaccinationDoses,
+		Sd: vaccinationDoses,
+		Mp: VaccineProduct,
+		Dt: vaccinationDate,
+		Tg: SNOMEDCovidCode,
+		Vp: VaccineType,
+		Ma: MarketingAuthorisation,
+		Co: issuerCountry,
+		Is: issuer,
+		Ci: "UVCI:01:NZ:FC45E0107AAA4CFD22D1F653E3281D4F", // Fake Certificate identifier as I am unsure how to generate it
+	}
+
+	return &DCC{
+		ExpirationTime: expiry,
+		IssuedAt:       issuedAt,
+		Issuer:         issuerCountry,
+		HealthCertificate: HCert{
+			DGC: DCCPayload{
+				Nam: NameInfo,
+				Dob: dob,
+				V:   []V{VaccinePayload},
+				Ver: GreenPassVersion,
+			},
+		},
+	}
+}
