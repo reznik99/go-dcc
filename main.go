@@ -21,7 +21,7 @@ func main() {
 
 	flag.Parse()
 
-	if !*generate && !*verify && !*info {
+	if *filePath == "" || (!*generate && !*verify && !*info) {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}

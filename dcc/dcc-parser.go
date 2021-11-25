@@ -14,21 +14,21 @@ import (
 
 func ParseGreenpass(path string, fileType int) (*DCC, error) {
 
+	if fileType == TypeQRCode {
+		return nil, fmt.Errorf("QRCode parsing not yet implemented")
+	}
+
+	// Read vaccine pass
 	fileBytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	if fileType == TypeQRCode {
-		return nil, fmt.Errorf("QRCode parsing not yet implemented")
-	}
-
+	// remove magic header : HC1: (Health Certificate Version 1)
 	dccBase45 := string(fileBytes)
 	if !strings.HasPrefix(dccBase45, "HC1:") {
 		return nil, fmt.Errorf("data does not appear to be EU DCC / Vaccine Passport")
 	}
-
-	// remove magic header : HC1: (Health Certificate Version 1)
 	dccBase45 = strings.Split(dccBase45, "HC1:")[1]
 
 	// Decode base45
