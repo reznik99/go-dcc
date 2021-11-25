@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/dasio/base45"
 	"github.com/fxamacker/cbor/v2"
@@ -71,7 +70,7 @@ func coseSign(data []byte) (*cose.Sign1Message, error) {
 
 	msg := cose.NewSign1Message()
 	msg.Headers.Protected["alg"] = "ES256"        // ECDSA w/ SHA-256
-	msg.Headers.Protected["kid"] = "dy8HnMQYOrE=" // Temporary hardcoded Key ID
+	msg.Headers.Protected["kid"] = "dy8HnMQYOrE=" // TODO: Temporary hardcoded Key ID
 	msg.Payload = data
 
 	err = msg.Sign(rand.Reader, nil, *signer)
@@ -90,15 +89,23 @@ func zlibCompress(data []byte) []byte {
 	return b.Bytes()
 }
 
-// readRaw reads raw config to parse data for Payload of DCC/Greenpass
-func readRaw(path string) (*Config, error) {
-
-	configFile, err := os.Open(path)
+func zlibDecompress(data []byte) ([]byte, error) {
+	b := bytes.NewReader(data)
+	z, err := zlib.NewReader(b)
 	if err != nil {
 		return nil, err
 	}
+	defer z.Close()
+	output, err := ioutil.ReadAll(z)
+	if err != nil {
+		return nil, err
+	}
+	return output, nil
+}
 
-	bytes, err := ioutil.ReadAll(configFile)
+// readRaw reads raw config to parse data for Payload of DCC/Greenpass
+func readRaw(path string) (*Config, error) {
+	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
