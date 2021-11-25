@@ -1,4 +1,4 @@
-package main
+package dcc
 
 import "time"
 
@@ -51,7 +51,7 @@ var (
 	MarketingAuthorisation = "ORG-100030215" // Biontech Manufacturing GmbH
 )
 
-func generateDCC(name, surname, dob, issuerCountry, issuer, vaccinationDate string, vaccinationDoses int) *DCC {
+func generateDCCStruct(name, surname, dob, issuerCountry, issuer, vaccinationDate string, vaccinationDoses int) *DCC {
 
 	issuedAt := int(time.Now().Unix())
 	expiry := int(time.Now().AddDate(1, 0, 0).Unix())

@@ -1,4 +1,4 @@
-module cbor-cose/v1
+module go-dcc/v1
 
 go 1.17
 
