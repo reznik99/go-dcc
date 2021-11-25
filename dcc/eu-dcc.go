@@ -5,14 +5,14 @@ import "time"
 // DCC (Digital Covid Certificate) Top Level CBOR structure
 // Section 3.3.1 at https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_v1_en.pdf
 type DCC struct {
-	ExpirationTime    int    `cbor:"4,keyasint,omitempty"`
-	IssuedAt          int    `cbor:"6,keyasint,omitempty"`
-	Issuer            string `cbor:"1,keyasint,omitempty"`
-	HealthCertificate HCert  `cbor:"-260,keyasint,omitempty"`
+	ExpirationTime    int    `cbor:"4,keyasint,omitempty" json:"4"`
+	IssuedAt          int    `cbor:"6,keyasint,omitempty" json:"6"`
+	Issuer            string `cbor:"1,keyasint,omitempty" json:"1"`
+	HealthCertificate HCert  `cbor:"-260,keyasint,omitempty" json:"-260"`
 }
 
 type HCert struct {
-	DGC DCCPayload `cbor:"1,keyasint,omitempty"`
+	DGC DCCPayload `cbor:"1,keyasint,omitempty" json:"1"`
 }
 
 type DCCPayload struct {
@@ -49,6 +49,9 @@ var (
 	VaccineProduct         = "EU/1/20/1528"
 	VaccineType            = "1119349007"    // SARS-CoV-2 mRNA vaccine
 	MarketingAuthorisation = "ORG-100030215" // Biontech Manufacturing GmbH
+
+	TypeQRCode      = 1
+	TypeRAWGreepass = 2
 )
 
 func generateDCCStruct(name, surname, dob, issuerCountry, issuer, vaccinationDate string, vaccinationDoses int) *DCC {
