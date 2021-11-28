@@ -1,5 +1,5 @@
 # go-dcc
-EU Digital Covid Certificate utilities in Go [Create, Validate and Parse Green-Pass/EU-DCC] 
+EU Digital Covid Certificate utilities in Go [Create, Validate and Parse EU-DCC/Greenpass] 
 
 *Repo is a work in-progress*
 
@@ -15,21 +15,26 @@ EU Digital Covid Certificate utilities in Go [Create, Validate and Parse Green-P
 
 ### CLI Usage:
 
-`./go-dcc -h` for more help on usages and parameters
+`./go-dcc -h` for more help on usages and parameters.<br>
+<br>
 
+### Generation
 #### Create and Sign Greenpass/EU-DCC with sample data that matches required schema for vaccine passports. <br>
-`./go-dcc -gen -in "./data.json"` to export DCC as QR code in PNG.<br>
-`./go-dcc -gen -raw -in "./data.json"` to export DCC as txt.<br>
+`./go-dcc -gen -in "./data.json"` to generate from json data and export DCC as QR code in PNG.<br>
+`./go-dcc -gen -raw -in "./data.json"` to generate from json data and export DCC as txt.<br>
+<br>
 
+### Validation
+#### Validate Greenpass/EU-DCC's. *todo:*<br>
+`./go-dcc -verify -in "./eu-dcc.png"` to validate DCC from QR code.<br>
+`./go-dcc -verify -raw -in "./eu-dcc.txt"` to validate raw DCC from txt file.<br>
+<br>
 
-#### Validate Greenpass/EU-DCC's <br>
-`./go-dcc -verify -in "./eu-dcc.png"`<br>
-`./go-dcc -verify -raw -in "./eu-dcc.txt"`<br>
-
-
+### Inspection
 #### Parse/Print contents of Greenpass/EU-DCC <br>
 `./go-dcc -info -in "./eu-dcc.png"` to read/parse a QR Code DCC.<br>
 `./go-dcc -info -raw -in "./eu-dcc.txt"` to read/parse a raw txt file DCC.<br>
+<br>
 
 -----
 

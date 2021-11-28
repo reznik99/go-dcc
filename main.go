@@ -34,7 +34,7 @@ func main() {
 		dcc.GenerateGreenpass(*filePath)
 	}
 	if *verify {
-		// dcc.VerifyGreenpass()
+		dcc.VerifyGreenpass(*filePath, fileType)
 	}
 	if *info {
 		_, err := dcc.ParseGreenpass(*filePath, fileType)
