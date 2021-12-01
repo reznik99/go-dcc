@@ -1,10 +1,19 @@
 package dcc
 
 import (
+	"crypto/ecdsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/veraison/go-cose"
 )
 
 var (
@@ -13,7 +22,7 @@ var (
 
 func VerifyGreenpass(filePath string, fileType int) {
 
-	_, err := ParseGreenpass(filePath, fileType)
+	dcc, raw, err := ParseGreenpass(filePath, fileType)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 	}
@@ -23,7 +32,8 @@ func VerifyGreenpass(filePath string, fileType int) {
 	fmt.Printf("Fetched %d KIDs from %s\n", len(kidsList), API_BASE_URL)
 
 	// Write PEMs into KIDs map
-	// kids := fetchCerts(kidsList)
+	// kids := map[string]string{}
+	kids := fetchCerts(kidsList)
 
 	// Extract KID from Passports Header
 	tag, err := cose.GetCommonHeaderTag("kid")
@@ -41,6 +51,53 @@ func VerifyGreenpass(filePath string, fileType int) {
 	var dccKidName = base64.StdEncoding.EncodeToString(dccKid.([]byte))
 
 	// Check KID is in trusted list
+	if _, ok := kids[dccKidName]; !ok {
+		fmt.Printf("vaccine Pass KID %s not found on trusted list at: %s\n", dccKidName, API_BASE_URL)
+	}
+	fmt.Printf("Vaccine Pass KID '%s' is trusted\n", dccKidName)
+
+	// Parse appropriate PEM of KID
+	pemCertificate := kids[dccKidName]
+	fmt.Printf("Vaccine Pass Signer Certificate PEM: \n%s\n", pemCertificate)
+	block, _ := pem.Decode([]byte(pemCertificate))
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	// Extract Public Key from Signer Certificate
+	switch cert.PublicKeyAlgorithm {
+	case x509.RSA:
+		fmt.Println("Signer certificate that signed this Vaccine Passport is of type: RSA")
+		return
+	case x509.ECDSA:
+		fmt.Println("Signer certificate that signed this Vaccine Passport is of type: ECDSA")
+	}
+	ecdsaPublic := cert.PublicKey.(*ecdsa.PublicKey)
+
+	// Extra information for debugging
+	toBeSigned, _ := raw.SigStructure(nil)
+	digest := sha256.Sum256(toBeSigned)
+	fmt.Printf("Digest: %s\n", hexutil.Encode(digest[:]))
+	fmt.Printf("Signature: %s\n", hexutil.Encode(raw.Signature))
+
+	// Work around to get Algorithm struct
+	// (Curve is not exported and therefore cannot be initialised outside the go-cose library)
+	signer, _ := cose.NewSigner(cose.ES256, nil)
+
+	// Verify the Vaccine Passport's Signature
+	verifier := cose.Verifier{
+		PublicKey: ecdsaPublic,
+		Alg:       signer.GetAlg(),
+	}
+	err = raw.Verify(nil, verifier)
+	if err != nil {
+		panic(errors.New("Verification FAILED with err: " + err.Error()))
+	}
+	fmt.Printf("%s's Vaccine Passport has Signature Validated succesfully\n", dcc.HealthCertificate.DGC.Nam.Gn)
+}
+
+// fetchCerts fetches all the Signer Certificates to be used to validate International Vaccine Passports
 func fetchCerts(kids []string) (kidsMap map[string]string) {
 	kidsMap = map[string]string{}
 	var token = "0"
