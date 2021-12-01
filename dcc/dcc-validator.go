@@ -18,7 +18,29 @@ func VerifyGreenpass(filePath string, fileType int) {
 		fmt.Printf("%s\n", err.Error())
 	}
 
-	// Validation logic
+	// Fetch KIDs to compare
+	kidsList := fetchValidKIDs()
+	fmt.Printf("Fetched %d KIDs from %s\n", len(kidsList), API_BASE_URL)
+
+	// Write PEMs into KIDs map
+	// kids := fetchCerts(kidsList)
+
+	// Extract KID from Passports Header
+	tag, err := cose.GetCommonHeaderTag("kid")
+	if err != nil {
+		panic(err)
+	}
+
+	dccKid := raw.Headers.Protected[tag]
+	if _, ok := dccKid.([]byte); !ok {
+		dccKid = raw.Headers.Unprotected[tag]
+		if _, ok = dccKid.([]byte); !ok {
+			panic(errors.New("ERROR: Couldn't extract KID from Vaccine Passport"))
+		}
+	}
+	var dccKidName = base64.StdEncoding.EncodeToString(dccKid.([]byte))
+
+	// Check KID is in trusted list
 func fetchCerts(kids []string) (kidsMap map[string]string) {
 	kidsMap = map[string]string{}
 	var token = "0"
@@ -50,6 +72,7 @@ func fetchCerts(kids []string) (kidsMap map[string]string) {
 
 		fmt.Printf("\rFetched %d/%d Signer Certificates", idx, len(kids))
 	}
+	fmt.Printf("Fetched %d/%d Signer Certificates", len(kids), len(kids))
 	return
 }
 
@@ -73,10 +96,4 @@ func fetchValidKIDs() []string {
 	}
 
 	return kids
-	for _, kid := range kids {
-		fmt.Println(kid)
-		kidsMap[kid] = true
-	}
-
-	return kidsMap
 }
