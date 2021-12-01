@@ -11,10 +11,6 @@ var (
 	API_BASE_URL = "https://get.dgc.gov.it/v1/dgc"
 )
 
-type KIDsList struct {
-	KIDs []string
-}
-
 func VerifyGreenpass(filePath string, fileType int) {
 
 	_, err := ParseGreenpass(filePath, fileType)
@@ -23,28 +19,37 @@ func VerifyGreenpass(filePath string, fileType int) {
 	}
 
 	// Validation logic
-	// TODO: Fetch certificates/signers from EU-DCC API and check against KID in Protected Header
 
 	kids := fetchValidKIDs()
-	for _, kid := range kids.KIDs {
-		fmt.Println(kid)
-	}
+
+	// TODO: Fetch certificates/signers from EU-DCC API and check against KID in Protected Header
+
 }
 
-func fetchValidKIDs() *KIDsList {
+// fetchValidKIDs fetches all KIDs from Italian DGC site to compare against Greenpass header
+func fetchValidKIDs() map[string]bool {
 	resp, err := http.Get(API_BASE_URL + "/signercertificate/status")
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
-	kids := new(KIDsList)
-	err = json.Unmarshal(bodyBytes, kids)
+
+	kids := []string{}
+	err = json.Unmarshal(bodyBytes, &kids)
 	if err != nil {
 		panic(err)
 	}
-	return kids
+
+	kidsMap := map[string]bool{}
+	for _, kid := range kids {
+		fmt.Println(kid)
+		kidsMap[kid] = true
+	}
+
+	return kidsMap
 }
