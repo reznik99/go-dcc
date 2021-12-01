@@ -10,7 +10,7 @@ import (
 	"github.com/veraison/go-cose"
 )
 
-func ParseGreenpass(path string, fileType int) (payload *DCC, headers *cose.Headers, messageRaw *cose.Sign1Message, signature []byte, err error) {
+func ParseGreenpass(path string, fileType int) (payload *DCC, messageRaw *cose.Sign1Message, err error) {
 
 	if fileType == TypeQRCode {
 		err = fmt.Errorf("QRCode parsing not yet implemented")
@@ -59,8 +59,6 @@ func ParseGreenpass(path string, fileType int) (payload *DCC, headers *cose.Head
 
 	// We got the goods! Return them
 	payload = dcc
-	headers = msg.Headers
-	signature = msg.Signature
 	messageRaw = msg
 
 	return
