@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,9 +15,12 @@ import (
 	"github.com/veraison/go-cose"
 )
 
-func GenerateGreenpass(path string) {
+// TODO: Temporary hardcoded Key ID
+var newZealandKID4 = "dy8HnMQYOrE="
 
-	conf, err := readRaw(path)
+func GenerateGreenpass(inputPath string, outputPath string, outputType int) {
+
+	conf, err := readRaw(inputPath)
 	if err != nil {
 		panic(err)
 	}
@@ -47,15 +51,22 @@ func GenerateGreenpass(path string) {
 	dccBase45 := base45.EncodeToString(dccCOSEcompressed)
 
 	// Prepend magic HC1 (Health Certificate Version 1)
-	dccBase45 = fmt.Sprintf("HC1:%s\n", dccBase45)
+	dccBase45 = fmt.Sprintf("HC1:%s", dccBase45)
 
 	fmt.Println(dccBase45)
 
-	// Convert to QR Code
-	filename := fmt.Sprintf("%s-vaccinePass.png", conf.Name)
-	err = qrcode.WriteFile(dccBase45, qrcode.Medium, 256, filename)
-	if err != nil {
-		panic(err)
+	// Convert to QR Code or raw txt
+	switch outputType {
+	case TypeRAWGreepass:
+		err = ioutil.WriteFile(outputPath, []byte(dccBase45), 0644)
+		if err != nil {
+			panic(err)
+		}
+	case TypeQRCode:
+		err = qrcode.WriteFile(dccBase45, qrcode.Medium, 256, outputPath)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -68,9 +79,14 @@ func coseSign(data []byte) (*cose.Sign1Message, error) {
 		return nil, err
 	}
 
+	kid, err := base64.StdEncoding.DecodeString(newZealandKID4)
+	if err != nil {
+		return nil, err
+	}
+
 	msg := cose.NewSign1Message()
-	msg.Headers.Protected["alg"] = "ES256"        // ECDSA w/ SHA-256
-	msg.Headers.Protected["kid"] = "dy8HnMQYOrE=" // TODO: Temporary hardcoded Key ID
+	msg.Headers.Protected["alg"] = "ES256" // ECDSA w/ SHA-256
+	msg.Headers.Protected["kid"] = kid     // KID is first 8 bytes of signer certificate
 	msg.Payload = data
 
 	err = msg.Sign(rand.Reader, nil, *signer)
