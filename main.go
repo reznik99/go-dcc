@@ -19,12 +19,13 @@ func main() {
 
 	raw := flag.Bool("raw", false, " raw txt file with HC1: greenpass contents instead of QR Code")
 
-	filePath := flag.String("in", "", "Path to input file")
+	inputPath := flag.String("in", "", "Path to input file")
+	outputPath := flag.String("out", "", "Path to output file")
 	fileType := dcc.TypeQRCode
 
 	flag.Parse()
 
-	if *filePath == "" || (!*generate && !*verify && !*info) {
+	if *inputPath == "" || (!*generate && !*verify && !*info) {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -34,13 +35,13 @@ func main() {
 	}
 
 	if *generate {
-		dcc.GenerateGreenpass(*filePath)
+		dcc.GenerateGreenpass(*inputPath, *outputPath, fileType)
 	}
 	if *verify {
-		dcc.VerifyGreenpass(*filePath, fileType)
+		dcc.VerifyGreenpass(*inputPath, fileType)
 	}
 	if *info {
-		dcc, raw, err := dcc.ParseGreenpass(*filePath, fileType)
+		dcc, raw, err := dcc.ParseGreenpass(*inputPath, fileType)
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 		}

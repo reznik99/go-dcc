@@ -92,7 +92,8 @@ func VerifyGreenpass(filePath string, fileType int) {
 	}
 	err = raw.Verify(nil, verifier)
 	if err != nil {
-		panic(errors.New("Verification FAILED with err: " + err.Error()))
+		fmt.Printf("Verification FAILED with err: %s\n", err.Error())
+		return
 	}
 	fmt.Printf("%s's Vaccine Passport has Signature Validated succesfully\n", dcc.HealthCertificate.DGC.Nam.Gn)
 }

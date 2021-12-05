@@ -7,8 +7,8 @@ EU Digital Covid Certificate utilities in Go [Create, Validate and Parse EU-DCC/
 
 ### Purpose:
 
-- To further understand how Vaccine Passports / EU-DCC / EU-DGC / Greenpasses work.
-- Analyze what personal information is store within.
+- To understand how Vaccine Passports / EU-DCC / EU-DGC / Greenpasses work.
+- Analyze what personal information is stored within.
 - Understand the security and limitations.
 
 -----
@@ -20,8 +20,8 @@ EU Digital Covid Certificate utilities in Go [Create, Validate and Parse EU-DCC/
 
 ### Generation
 #### Create and Sign Greenpass/EU-DCC with sample data that matches required schema for vaccine passports. <br>
-`./go-dcc -gen -in "./data.json"` to generate from json data and export DCC as QR code in PNG.<br>
-`./go-dcc -gen -raw -in "./data.json"` to generate from json data and export DCC as txt.<br>
+`./go-dcc -gen -in "./data.json" -out "./test.png"` to generate from json data and export DCC as QR code in PNG.<br>
+`./go-dcc -gen -raw -in "./data.json" -out "./test.txt"` to generate from json data and export DCC as txt.<br>
 <br>
 
 ### Validation
