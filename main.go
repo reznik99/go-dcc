@@ -2,10 +2,13 @@ package main
 
 import (
 	_ "crypto/sha256"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"go-dcc/v1/dcc"
 	"os"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func main() {
@@ -37,9 +40,19 @@ func main() {
 		dcc.VerifyGreenpass(*filePath, fileType)
 	}
 	if *info {
-		_, err := dcc.ParseGreenpass(*filePath, fileType)
+		dcc, raw, err := dcc.ParseGreenpass(*filePath, fileType)
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 		}
+
+		prettyDCC, err := json.MarshalIndent(dcc, "", "	")
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+		}
+
+		fmt.Printf("Headers:   %v\n", raw.Headers)
+		fmt.Printf("Payload:   %s\n", prettyDCC)
+		fmt.Printf("Signature: %s\n", hexutil.Encode(raw.Signature))
+
 	}
 }
