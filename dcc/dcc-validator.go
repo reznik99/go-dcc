@@ -63,16 +63,14 @@ func VerifyGreenpass(filePath string, fileType int) {
 	// Print extra information for debugging
 	toBeSigned, _ := raw.SigStructure(nil)
 	digest := sha256.Sum256(toBeSigned)
+
 	fmt.Printf("Digest: %s\n", hexutil.Encode(digest[:]))
 	fmt.Printf("Signature: %s\n", hexutil.Encode(raw.Signature))
 
-	// Work around to get Algorithm struct (Curve is not exported and therefore cannot be initialised outside the go-cose library)
-	signer, _ := cose.NewSigner(cose.ES256, nil)
 	verifier := cose.Verifier{
 		PublicKey: publicKey,
-		Alg:       signer.GetAlg(),
+		Alg:       cose.ES256,
 	}
-
 	// Verify the Vaccine Passport's Signature
 	err = raw.Verify(nil, verifier)
 	if err != nil {
@@ -113,7 +111,7 @@ func fetchCerts(kids []string) (kidsMap map[string]string) {
 
 		fmt.Printf("\rFetched %d/%d Signer Certificates", idx, len(kids))
 	}
-	fmt.Printf("Fetched %d/%d Signer Certificates", len(kids), len(kids))
+	fmt.Printf("\rFetched %d/%d Signer Certificates\n", len(kids), len(kids))
 	return
 }
 
