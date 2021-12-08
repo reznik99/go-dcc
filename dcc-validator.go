@@ -34,6 +34,7 @@ func VerifyGreenpass(filePath string, fileType int) {
 
 	// Write PEMs into KIDs map
 	// kids := map[string]string{}
+	// kids["dy8HnMQYOrE="] = "-----BEGIN CERTIFICATE-----\nMIICmDCCAh6gAwIBAgIUNe+sDjaZPIfOw8OIMwqniNZ1ABEwCgYIKoZIzj0EAwIwZTELMAkGA1UEBhMCTloxIjAgBgNVBAoMGUdvdmVybm1lbnQgb2YgTmV3IFplYWxhbmQxGzAZBgNVBAsMEk1pbmlzdHJ5IG9mIEhlYWx0aDEVMBMGA1UEAwwMVmFjY2luZSBDU0NBMB4XDTIxMTEwNDAxMDMwOFoXDTMyMDMwMTAxMDMwN1owgZQxCzAJBgNVBAYTAk5aMSIwIAYDVQQKDBlHb3Zlcm5tZW50IG9mIE5ldyBaZWFsYW5kMRswGQYDVQQLDBJNaW5pc3RyeSBvZiBIZWFsdGgxFTATBgNVBAsMDFZhY2NpbmUgQ1NDQTEtMCsGA1UEAwwkVmFjY2luZSBEb2N1bWVudCBTaWduZXIgMjAyMTExMDIwMDEwMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQEqBzWkYP17/i2b+EPcLpiQvTKLxasVDjA3A7IvRt9RHjYFIQGpFQCR7ZJLD5XQNsjcFfHzxwVEITkb5M7fIyaN8MHowHwYDVR0jBBgwFoAUBYexBS6L22zGjlutPHLVuaircxkwHQYDVR0OBBYEFIrSwiSmYianLXQsxR6ZAFL5/ltIMCsGA1UdEAQkMCKADzIwMjExMTA0MDEwMzA4WoEPMjAyMjAzMDQwMTAzMDhaMAsGA1UdDwQEAwIHgDAKBggqhkjOPQQDAgNoADBlAjEA9UwmICswUwNiWRzvb4V+U0Z7qKebbIIldgtTp+nHmcme5HGjKc8UuT/yvuzzK4qoAjBvlH+kAQGZuXrSXduh+CtY20W+NEPrYV6bjDUdxQEzCxmOrsA1LWl2lHdIcLRSDdc=\n-----END CERTIFICATE-----"
 	kids := fetchCerts(kidsList)
 
 	// Extract KID from Passports Header
@@ -72,11 +73,17 @@ func VerifyGreenpass(filePath string, fileType int) {
 		Alg:       cose.ES256,
 	}
 	// Verify the Vaccine Passport's Signature
-	err = raw.Verify(nil, verifier)
+	err = verifier.Verify(digest[:], raw.Signature)
 	if err != nil {
-		log.Fatalf("Verification FAILED with err: %s\n", err.Error())
+		err = raw.Verify(nil, verifier)
+		if err != nil {
+			fmt.Printf("Verification FAILED with err: %s\n", err.Error())
+		} else {
+			fmt.Printf("%s's Greenpass Validated succesfully\n", dcc.HealthCertificate.DGC.Nam.Gn)
+		}
+	} else {
+		fmt.Printf("%s's Greenpass Validated succesfully\n", dcc.HealthCertificate.DGC.Nam.Gn)
 	}
-	fmt.Printf("%s's Vaccine Passport has Signature Validated succesfully\n", dcc.HealthCertificate.DGC.Nam.Gn)
 }
 
 // fetchCerts fetches all the Signer Certificates to be used to validate International Vaccine Passports
