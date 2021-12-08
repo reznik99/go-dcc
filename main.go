@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go-dcc/v1/dcc"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/reznik99/go-dcc/v1/dcc"
 )
 
 func main() {
