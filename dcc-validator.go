@@ -18,13 +18,8 @@ var (
 	API_BASE_URL = "https://get.dgc.gov.it/v1/dgc"
 )
 
-// Verify verifies a Vaccine Passport, it reads the file of type fileType
-func Verify(filePath string) (valid bool, err error) {
-	// Parse certificate from raw or QR code, returning raw cose and parsed dcc payload
-	_, raw, err := Parse(filePath)
-	if err != nil {
-		return
-	}
+// Verify verifies a Vaccine Passport's signature, it reads the file at 'filePath' and returns the status and/or error
+func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 
 	// Fetch KIDs to compare
 	kidsList, err := fetchValidKIDs()

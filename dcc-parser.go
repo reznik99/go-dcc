@@ -12,10 +12,13 @@ import (
 
 var dccPrefix = "HC1:"
 
-func ParseQR(path string) error {
-	return errors.New("QRCode parsing not yet implemented")
+// ParseQR parses a Vaccine Passport, it reads the image file at 'path', decoding the QR code and returns the Pass Payload and Raw COSE message containing headers, payload and signatures
+func ParseQR(path string) (payload *DCC, messageRaw *cose.Sign1Message, err error) {
+	err = errors.New("QRCode parsing not yet implemented")
+	return
 }
 
+// Parse parses a Vaccine Passport, it reads the file at 'path' and returns the Pass Payload and Raw COSE message containing headers, payload and signatures
 func Parse(path string) (payload *DCC, messageRaw *cose.Sign1Message, err error) {
 
 	// Read vaccine pass

@@ -18,9 +18,10 @@ import (
 // TODO: Temporary hardcoded Key ID
 var newZealandKID4 = "dy8HnMQYOrE="
 
-func GenerateQR(inputPath string, outputPath string) error {
+// Generates Vaccine Passport with json data read from 'qrPath' and outputs the Pass as a QR code at 'outputPath'
+func GenerateQR(qrPath string, outputPath string) error {
 
-	raw, err := Generate(inputPath, outputPath)
+	raw, err := Generate(qrPath)
 	if err != nil {
 		return err
 	}
@@ -34,9 +35,10 @@ func GenerateQR(inputPath string, outputPath string) error {
 	return nil
 }
 
-func Generate(inputPath string, outputPath string) (dccBase54 string, err error) {
+// Generates Vaccine Passport with json data read from 'dataPath' and returns raw Pass string as `HC1:...`
+func Generate(dataPath string) (dccBase45 string, err error) {
 
-	conf, err := readRaw(inputPath)
+	conf, err := readRaw(dataPath)
 	if err != nil {
 		return
 	}
@@ -64,15 +66,11 @@ func Generate(inputPath string, outputPath string) (dccBase54 string, err error)
 	dccCOSEcompressed := zlibCompress(dccCOSE)
 
 	// Encode zlib compressed cose to base45
-	dccBase45 := base45.EncodeToString(dccCOSEcompressed)
+	dccBase45 = base45.EncodeToString(dccCOSEcompressed)
 
 	// Prepend magic HC1 (Health Certificate Version 1)
-	dccBase45 = fmt.Sprintf("HC1:%s", dccBase45)
+	dccBase45 = fmt.Sprintf("%s%s", dccPrefix, dccBase45)
 
-	err = ioutil.WriteFile(outputPath, []byte(dccBase45), 0644)
-	if err != nil {
-		return
-	}
 	return
 }
 

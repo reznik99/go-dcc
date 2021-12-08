@@ -49,9 +49,6 @@ var (
 	VaccineProduct         = "EU/1/20/1528"
 	VaccineType            = "1119349007"    // SARS-CoV-2 mRNA vaccine
 	MarketingAuthorisation = "ORG-100030215" // Biontech Manufacturing GmbH
-
-	TypeQRCode      = 1
-	TypeRAWGreepass = 2
 )
 
 func generateDCCStruct(name, surname, dob, issuerCountry, issuer, vaccinationDate string, vaccinationDoses int) *DCC {
