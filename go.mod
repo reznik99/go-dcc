@@ -1,4 +1,4 @@
-module github.com/reznik99/go-dcc/v1
+module github.com/reznik99/go-dcc
 
 go 1.17
 
