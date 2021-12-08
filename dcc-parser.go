@@ -1,7 +1,7 @@
 package dcc
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"strings"
 
@@ -10,12 +10,13 @@ import (
 	"github.com/veraison/go-cose"
 )
 
-func ParseGreenpass(path string, fileType int) (payload *DCC, messageRaw *cose.Sign1Message, err error) {
+var dccPrefix = "HC1:"
 
-	if fileType == TypeQRCode {
-		err = fmt.Errorf("QRCode parsing not yet implemented")
-		return
-	}
+func ParseQR(path string) error {
+	return errors.New("QRCode parsing not yet implemented")
+}
+
+func Parse(path string) (payload *DCC, messageRaw *cose.Sign1Message, err error) {
 
 	// Read vaccine pass
 	fileBytes, err := ioutil.ReadFile(path)
@@ -25,11 +26,11 @@ func ParseGreenpass(path string, fileType int) (payload *DCC, messageRaw *cose.S
 
 	// remove magic header : HC1: (Health Certificate Version 1)
 	dccBase45 := string(fileBytes)
-	if !strings.HasPrefix(dccBase45, "HC1:") {
-		err = fmt.Errorf("data does not appear to be EU DCC / Vaccine Passport")
+	if !strings.HasPrefix(dccBase45, dccPrefix) {
+		err = errors.New("data does not appear to be EU DCC / Vaccine Passport")
 		return
 	}
-	dccBase45 = strings.Split(dccBase45, "HC1:")[1]
+	dccBase45 = strings.Split(dccBase45, dccPrefix)[1]
 
 	// Decode base45
 	dccCOSECompressed, err := base45.DecodeString(dccBase45)

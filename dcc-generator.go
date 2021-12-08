@@ -18,11 +18,27 @@ import (
 // TODO: Temporary hardcoded Key ID
 var newZealandKID4 = "dy8HnMQYOrE="
 
-func GenerateGreenpass(inputPath string, outputPath string, outputType int) {
+func GenerateQR(inputPath string, outputPath string) error {
+
+	raw, err := Generate(inputPath, outputPath)
+	if err != nil {
+		return err
+	}
+
+	// Convert to QR Code or raw txt
+	err = qrcode.WriteFile(raw, qrcode.Medium, 256, outputPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Generate(inputPath string, outputPath string) (dccBase54 string, err error) {
 
 	conf, err := readRaw(inputPath)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// Generate JSON eu-dcc structure
@@ -31,17 +47,17 @@ func GenerateGreenpass(inputPath string, outputPath string, outputType int) {
 	// JSON to CBOR
 	dccCBORBytes, err := cbor.Marshal(dccJson)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// Sign CBOR with COSE
 	dccCOSESignMsg, err := coseSign(dccCBORBytes)
 	if err != nil {
-		panic(err)
+		return
 	}
 	dccCOSE, err := dccCOSESignMsg.MarshalCBOR()
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// Compress Binary COSE Data with zlib
@@ -53,21 +69,11 @@ func GenerateGreenpass(inputPath string, outputPath string, outputType int) {
 	// Prepend magic HC1 (Health Certificate Version 1)
 	dccBase45 = fmt.Sprintf("HC1:%s", dccBase45)
 
-	fmt.Println(dccBase45)
-
-	// Convert to QR Code or raw txt
-	switch outputType {
-	case TypeRAWGreepass:
-		err = ioutil.WriteFile(outputPath, []byte(dccBase45), 0644)
-		if err != nil {
-			panic(err)
-		}
-	case TypeQRCode:
-		err = qrcode.WriteFile(dccBase45, qrcode.Medium, 256, outputPath)
-		if err != nil {
-			panic(err)
-		}
+	err = ioutil.WriteFile(outputPath, []byte(dccBase45), 0644)
+	if err != nil {
+		return
 	}
+	return
 }
 
 func coseSign(data []byte) (*cose.Sign1Message, error) {
