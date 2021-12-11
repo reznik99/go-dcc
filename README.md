@@ -85,7 +85,7 @@ _Below is some examples of how you can use this package, without explicit error 
    )
 
    func main() {
-       data, err := dcc.Generate("./data.json", "DCC-Test.png")
+       data, err := dcc.Generate("./data.json")
 
        fmt.Printf("%s", data)
 
