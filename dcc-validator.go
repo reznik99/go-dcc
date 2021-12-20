@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/veraison/go-cose"
 )
 
@@ -55,9 +56,17 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 
 	publicKey := cert.PublicKey.(crypto.PublicKey)
 
-	// Print extra information for debugging
-	toBeSigned, _ := raw.SigStructure(nil)
-	digest := sha256.Sum256(toBeSigned)
+	// build signature digest
+	ss, err := cbor.Marshal([]interface{}{
+		"Signature1",
+		raw.Headers.Protected,
+		[]byte{},
+		raw.Payload,
+	})
+	if err != nil {
+		return
+	}
+	digest := sha256.Sum256(ss)
 
 	verifier := cose.Verifier{
 		PublicKey: publicKey,
