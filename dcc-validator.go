@@ -59,7 +59,7 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 	// build signature digest
 	ss, err := cbor.Marshal([]interface{}{
 		"Signature1",
-		raw.Headers.Protected,
+		raw.Headers.EncodeProtected(),
 		[]byte{},
 		raw.Payload,
 	})
