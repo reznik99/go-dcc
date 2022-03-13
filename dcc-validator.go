@@ -18,7 +18,8 @@ var (
 	API_BASE_URL = "https://get.dgc.gov.it/v1/dgc"
 )
 
-// Verify verifies a Vaccine Passport's signature, it reads the file at 'filePath' and returns the status and/or error
+// Verify a Vaccine Passport's signature, it reads the *cose.Sign1Message parameter and returns the status and/or error.
+// This function makes network requests (HTTP) to fetch the KIDs to verify the pass
 func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 
 	// Fetch KIDs to compare
@@ -42,7 +43,7 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 
 	// Check KID is in trusted list
 	if _, ok := kids[kid]; !ok {
-		return
+		return false, errors.New("KID in Pass not recognized, cannot verify")
 	}
 
 	// Parse Signer certificate belonging to KID. Extract public key
@@ -56,6 +57,7 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 	publicKey := cert.PublicKey.(crypto.PublicKey)
 
 	// Print extra information for debugging
+	// TO FIX: This signature verification code fails for VALID Vaccine Passports...
 	toBeSigned, _ := raw.SigStructure(nil)
 	digest := sha256.Sum256(toBeSigned)
 
@@ -67,7 +69,7 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 	// Verify the Vaccine Passport's Signature
 	err = verifier.Verify(digest[:], raw.Signature)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	return true, nil
 }
