@@ -78,7 +78,7 @@ func coseSign(data []byte) (*cose.Sign1Message, error) {
 
 	// create a signer with a new private key
 	// TODO: This should be initiated from existing keypair
-	signer, err := cose.NewSigner(cose.ES256, nil)
+	signer, err := cose.NewSigner(cose.AlgorithmES256, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func coseSign(data []byte) (*cose.Sign1Message, error) {
 	msg.Headers.Protected["kid"] = kid     // KID is first 8 bytes of signer certificate
 	msg.Payload = data
 
-	err = msg.Sign(rand.Reader, nil, *signer)
+	err = msg.Sign(rand.Reader, nil, signer)
 	if err != nil {
 		return nil, err
 	}
