@@ -88,8 +88,7 @@ func coseSign(payload []byte, key crypto.Signer, kid string) (*cose.Sign1Message
 	}
 
 	msg := cose.NewSign1Message()
-	msg.Headers.Protected["alg"] = cose.AlgorithmES256.String() // ECDSA w/ SHA-256
-	msg.Headers.Protected["kid"] = kidBytes                     // KID is first 8 bytes of Signer Certificate
+	msg.Headers.Protected[cose.HeaderLabelKeyID] = kidBytes // KID is first 8 bytes of Signer Certificate
 	msg.Payload = payload
 
 	err = msg.Sign(rand.Reader, nil, signer)
