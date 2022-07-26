@@ -7,10 +7,10 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/veraison/go-cose"
 )
 
@@ -122,14 +122,28 @@ func fetchValidKIDs() ([]string, error) {
 	return kids, err
 }
 
-// extractHeaderBytes extracts header bytes with given tag name, from Protected or Unprotected header in cose signature object
+// extractHeaderBytes extracts header bytes with given tag from Protected or Unprotected header in cose signature object
 func extractHeaderBytes(raw *cose.Sign1Message, tag int64) ([]byte, error) {
-	var dccKid = raw.Headers.Protected[tag]
+	var dccKid, ok = raw.Headers.Protected[tag]
+	if !ok {
+		return extractUnprotectedHeaderBytes(raw, tag)
+	}
 	if _, ok := dccKid.([]byte); !ok {
-		dccKid = raw.Headers.Unprotected[tag]
-		if _, ok = dccKid.([]byte); !ok {
-			return nil, errors.New("ERROR: Couldn't extract KID from Vaccine Passport")
-		}
+		return extractUnprotectedHeaderBytes(raw, tag)
+	}
+
+	return dccKid.([]byte), nil
+}
+
+// extractUnprotectedHeaderBytes extracts header bytes with given tag from Unprotected header in cose signature object
+func extractUnprotectedHeaderBytes(raw *cose.Sign1Message, tag int64) ([]byte, error) {
+	var dccKid, ok = raw.Headers.Unprotected[tag]
+	if !ok {
+		return nil, fmt.Errorf("tag %d not found in Protected or Unprotected headers", tag)
+	}
+
+	if _, ok = dccKid.([]byte); !ok {
+		return nil, errors.New("failed to extract KID from Vaccine Passport")
 	}
 
 	return dccKid.([]byte), nil
