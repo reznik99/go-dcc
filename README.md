@@ -110,6 +110,18 @@ _Below is some examples of how you can use this package, without explicit error 
     }
    ```
 
+_Example JSON data file_
+```js
+    {
+        "name": "JOHN",
+        "surname": "DOE",
+        "dob": "1996-06-06",
+        "issuerCountry": "NZ",
+        "issuer": "Ministry of Health, NZ",
+        "vaccinationDate": "2021-10-21",
+        "doses": 2
+    }
+```
 
 
 _For more examples, please refer to the [Documentation](https://pkg.go.dev/github.com/reznik99/go-dcc)_
@@ -125,7 +137,7 @@ _For more examples, please refer to the [Documentation](https://pkg.go.dev/githu
 - [x] Encode/Generate EU DCC certs (Valid schema but not valid signature obviously)
 - [ ] Verify/Validate EU DCC certs (This is not working quite yet)
 
-See the [open issues](https://github.com/reznik99/go-dcc/Best-README-Template/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/reznik99/go-dcc/issues) for a full list of proposed features (and known issues).
 <br>
 <br>
 
