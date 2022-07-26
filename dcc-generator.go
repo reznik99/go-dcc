@@ -3,6 +3,7 @@ package dcc
 import (
 	"bytes"
 	"compress/zlib"
+	"crypto"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -15,18 +16,16 @@ import (
 	"github.com/veraison/go-cose"
 )
 
-// TODO: Temporary hardcoded Key ID
-var newZealandKID4 = "dy8HnMQYOrE="
+// Generates Vaccine Passport with json data read from 'dataPath' and writes the Vaccine Pass as a QR code file at 'outputPath'
+func GenerateQR(key crypto.Signer, kid, dataPath, outputPath string) error {
 
-// Generates Vaccine Passport with json data read from 'qrPath' and outputs the Pass as a QR code at 'outputPath'
-func GenerateQR(qrPath string, outputPath string) error {
-
-	raw, err := Generate(qrPath)
+	// Generate Vaccine Pass using given key and data
+	raw, err := Generate(key, kid, dataPath)
 	if err != nil {
 		return err
 	}
 
-	// Convert to QR Code or raw txt
+	// Write raw Vaccine Pass to QR code file
 	err = qrcode.WriteFile(raw, qrcode.Medium, 256, outputPath)
 	if err != nil {
 		return err
@@ -35,8 +34,8 @@ func GenerateQR(qrPath string, outputPath string) error {
 	return nil
 }
 
-// Generates Vaccine Passport with json data read from 'dataPath' and returns raw Pass string as `HC1:...`
-func Generate(dataPath string) (dccBase45 string, err error) {
+// Generates Vaccine Passport with json data read from 'dataPath' and returns raw Vaccine Pass string as `HC1:...`
+func Generate(key crypto.Signer, kid, dataPath string) (dccBase45 string, err error) {
 
 	conf, err := readRaw(dataPath)
 	if err != nil {
@@ -44,16 +43,16 @@ func Generate(dataPath string) (dccBase45 string, err error) {
 	}
 
 	// Generate JSON eu-dcc structure
-	dccJson := generateDCCStruct(conf.Name, conf.Surname, conf.Dob, conf.IssuerCountry, conf.Issuer, conf.VaccinationDate, conf.Doses)
+	payload := generateDCCStruct(conf.Name, conf.Surname, conf.Dob, conf.IssuerCountry, conf.Issuer, conf.VaccinationDate, conf.Doses)
 
-	// JSON to CBOR
-	dccCBORBytes, err := cbor.Marshal(dccJson)
+	// JSON struct to CBOR
+	dccCBORBytes, err := cbor.Marshal(payload)
 	if err != nil {
 		return
 	}
 
 	// Sign CBOR with COSE
-	dccCOSESignMsg, err := coseSign(dccCBORBytes)
+	dccCOSESignMsg, err := coseSign(dccCBORBytes, key, kid)
 	if err != nil {
 		return
 	}
@@ -74,26 +73,25 @@ func Generate(dataPath string) (dccBase45 string, err error) {
 	return
 }
 
-func coseSign(data []byte) (*cose.Sign1Message, error) {
+// coseSign Signs the given CBOR payload with the given signer key
+func coseSign(payload []byte, key crypto.Signer, kid string) (*cose.Sign1Message, error) {
 
 	// create a signer with a new private key
-	// TODO: This should be initiated from existing keypair
-	signer, err := cose.NewSigner(cose.ES256, nil)
+	signer, err := cose.NewSigner(cose.AlgorithmES256, key)
 	if err != nil {
 		return nil, err
 	}
 
-	kid, err := base64.StdEncoding.DecodeString(newZealandKID4)
+	kidBytes, err := base64.StdEncoding.DecodeString(kid)
 	if err != nil {
 		return nil, err
 	}
 
 	msg := cose.NewSign1Message()
-	msg.Headers.Protected["alg"] = "ES256" // ECDSA w/ SHA-256
-	msg.Headers.Protected["kid"] = kid     // KID is first 8 bytes of signer certificate
-	msg.Payload = data
+	msg.Headers.Protected[cose.HeaderLabelKeyID] = kidBytes // KID is first 8 bytes of Signer Certificate
+	msg.Payload = payload
 
-	err = msg.Sign(rand.Reader, nil, *signer)
+	err = msg.Sign(rand.Reader, nil, signer)
 	if err != nil {
 		return nil, err
 	}

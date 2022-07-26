@@ -2,12 +2,12 @@ package dcc
 
 import (
 	"crypto"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -35,7 +35,7 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 	}
 
 	// Extract KID from Passports Header
-	kidBytes, err := extractHeaderBytes(raw, "kid")
+	kidBytes, err := extractHeaderBytes(raw, cose.HeaderLabelKeyID)
 	if err != nil {
 		return
 	}
@@ -56,22 +56,13 @@ func Verify(raw *cose.Sign1Message) (valid bool, err error) {
 
 	publicKey := cert.PublicKey.(crypto.PublicKey)
 
-	// Print extra information for debugging
-	// TO FIX: This signature verification code fails for VALID Vaccine Passports...
-	toBeSigned, _ := raw.SigStructure(nil)
-	digest := sha256.Sum256(toBeSigned)
+	verifier, _ := cose.NewVerifier(cose.AlgorithmES256, publicKey)
 
-	verifier := cose.Verifier{
-		PublicKey: publicKey,
-		Alg:       cose.ES256,
-	}
-
-	// Verify the Vaccine Passport's Signature
-	err = verifier.Verify(digest[:], raw.Signature)
+	err = raw.Verify(nil, verifier)
 	if err != nil {
 		return false, err
 	}
-	return true, nil
+	return true, err
 }
 
 // fetchCerts fetches all the Signer Certificates to be used to validate International Vaccine Passports
@@ -131,19 +122,28 @@ func fetchValidKIDs() ([]string, error) {
 	return kids, err
 }
 
-// extractHeaderBytes extracts header bytes with given tag name, from Protected or Unprotected header in cose signature object
-func extractHeaderBytes(raw *cose.Sign1Message, headerName string) ([]byte, error) {
-	var tag, err = cose.GetCommonHeaderTag(headerName)
-	if err != nil {
-		return nil, err
+// extractHeaderBytes extracts header bytes with given tag from Protected or Unprotected header in cose signature object
+func extractHeaderBytes(raw *cose.Sign1Message, tag int64) ([]byte, error) {
+	var dccKid, ok = raw.Headers.Protected[tag]
+	if !ok {
+		return extractUnprotectedHeaderBytes(raw, tag)
+	}
+	if _, ok := dccKid.([]byte); !ok {
+		return extractUnprotectedHeaderBytes(raw, tag)
 	}
 
-	var dccKid = raw.Headers.Protected[tag]
-	if _, ok := dccKid.([]byte); !ok {
-		dccKid = raw.Headers.Unprotected[tag]
-		if _, ok = dccKid.([]byte); !ok {
-			return nil, errors.New("ERROR: Couldn't extract KID from Vaccine Passport")
-		}
+	return dccKid.([]byte), nil
+}
+
+// extractUnprotectedHeaderBytes extracts header bytes with given tag from Unprotected header in cose signature object
+func extractUnprotectedHeaderBytes(raw *cose.Sign1Message, tag int64) ([]byte, error) {
+	var dccKid, ok = raw.Headers.Unprotected[tag]
+	if !ok {
+		return nil, fmt.Errorf("tag %d not found in Protected or Unprotected headers", tag)
+	}
+
+	if _, ok = dccKid.([]byte); !ok {
+		return nil, errors.New("failed to extract KID from Vaccine Passport")
 	}
 
 	return dccKid.([]byte), nil
