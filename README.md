@@ -9,7 +9,6 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
@@ -20,7 +19,7 @@
   <h3 align="center">GO-DCC</h3>
 
   <p align="center">
-    A simple library to Decode, Generate and Validate EU-DCC / Vaccine Passports 
+    A simple library to View, Generate and Verify EU-DCC / Vaccine Passes 
     <br />
     <a href="https://pkg.go.dev/github.com/reznik99/go-dcc"><strong>Explore the docs »</strong></a>
     <br />
@@ -32,28 +31,16 @@
 </div>
 
 
-
-
 ## About This Package
 
 [![Product Name Screen Shot][screenshot]](https://example.com)
 
 This package offers simple API calls to Decode, Encode and Verify Vaccine Passes.
 <br>
-This package was a project to help me learn better about the protocols used.
-
-Here's why:
-* To understand how Vaccine Passports / EU-DCC / EU-DGC / Greenpasses work.
-* Analyze what personal information is stored within.
-* Understand the security and limitations.
-
-
-
+APIs are subject to changes as improvements are made.
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
-
 ### Prerequisites
 
 _Go get the module to import it into your project_
@@ -67,32 +54,46 @@ _Go get the module to import it into your project_
 
 _Below is some examples of how you can use this package, without explicit error handling for simplicity's sake_
 
-1. To generate an example EU-DCC vaccine certificate as QR code using data from `data.json`
+1. To generate a Vaccine Pass using data from `data.json`
    ```go
    import (
        "github.com/reznik99/go-dcc"
    )
 
    func main() {
-       var err = dcc.GenerateQR("./data.json", "DCC-Test.png")
+        // Base64 of first 8 bytes in Signer Certificate
+        kid := "dy8HnMQYOrE="
+
+        // Generate or load Signer Key
+        privKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+
+        // Generate/Sign Vaccine Pass and save as QR code
+        dcc.GenerateQR(privKey, kid, "/path/to/data.json", "/path/to/new-pass.png")
+
+        // Generate/Sign Vaccine Pass Raw string "HC1:..."
+        dcc.Generate(privKey, kid, "/path/to/data.json")
    }
    ```
-2. To generate an example EU-DCC vaccine certificate as raw
+2. To validate/verify a Vaccine Pass
    ```go
    import (
-       "fmt"
        "github.com/reznik99/go-dcc"
    )
 
    func main() {
-       data, err := dcc.Generate("./data.json")
+        // Parse Raw Vaccine Pass
+        _, rawMsg, _ := dcc.Parse("/path/to/mypass.txt")
+        // Parse QR Code Vaccine Pass
+        _, rawMsg, _ := dcc.ParseQR("/path/to/mypass.png")
 
-       fmt.Printf("%s", data)
-
-       // Will print `HC1:......`
+        // Verify Vaccine Pass signature. note: currently slow! This will fetch the PEM Signer Certificates and KIDs
+        valid, _ := dcc.Verify(rawMsg)
+        
+        fmt.Printf("Vaccine Pass Valid: %t\n", valid)
    }
    ```
-3. To decode/read an EU-DCC QR code Vaccine Pass
+
+3. To decode/read a Vaccine Pass
    ```go
     import (
         "fmt"
@@ -101,9 +102,13 @@ _Below is some examples of how you can use this package, without explicit error 
     )
 
     func main() {
-        payload, rawMsg, _ := dcc.ParseQR("path/to/qr-code.png")
-        prettyDCC, _ := json.MarshalIndent(payload, "", "	")
+        // Parse Raw Vaccine Pass
+        payload, _, _ := dcc.Parse("/path/to/mypass.txt")
+        // Parse QR Code Vaccine Pass
+        payload, _, _ := dcc.ParseQR("/path/to/mypass.png")
 
+        // Print contents to STDOUT
+        prettyDCC, _ := json.MarshalIndent(payload, "", "	")
         fmt.Printf("Headers:   %v\n", rawMsg.Headers)
         fmt.Printf("Payload:   %s\n", prettyDCC)
         fmt.Printf("Signature: %s\n", hexutil.Encode(rawMsg.Signature))
@@ -135,7 +140,8 @@ _For more examples, please refer to the [Documentation](https://pkg.go.dev/githu
 
 - [x] Decode/Read EU DCC certs
 - [x] Encode/Generate EU DCC certs (Valid schema but not valid signature obviously)
-- [ ] Verify/Validate EU DCC certs (This is not working quite yet)
+- [x] Verify/Validate EU DCC certs (This is not working quite yet)
+- [ ] Improve KID and Signer Certificate fetching logic or allow user to specify values for performance.
 
 See the [open issues](https://github.com/reznik99/go-dcc/issues) for a full list of proposed features (and known issues).
 <br>
