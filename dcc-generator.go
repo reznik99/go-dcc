@@ -26,7 +26,7 @@ func GenerateQR(key crypto.Signer, kid, dataPath, outputPath string) error {
 	}
 
 	// Write raw Vaccine Pass to QR code file
-	err = qrcode.WriteFile(raw, qrcode.Medium, 256, outputPath)
+	err = qrcode.WriteFile(raw, qrcode.Large, 500, outputPath)
 	if err != nil {
 		return err
 	}
