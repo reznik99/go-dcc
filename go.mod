@@ -1,4 +1,4 @@
-module github.com/mrdobing/go-dcc
+module github.com/mrdobing/go-dcc/v1
 
 go 1.17
 
